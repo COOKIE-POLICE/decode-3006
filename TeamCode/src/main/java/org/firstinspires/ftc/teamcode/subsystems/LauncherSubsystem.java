@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 
 import org.firstinspires.ftc.teamcode.Preferences;
+import org.firstinspires.ftc.teamcode.modules.BangBangController;
 import org.firstinspires.ftc.teamcode.strategies.launcherpidfcalculationstrategy.LauncherPIDFCalculationStrategy;
 import org.firstinspires.ftc.teamcode.strategies.launcherpidfcalculationstrategy.SmartLauncherPIDFCalculationStrategy;
 import org.firstinspires.ftc.teamcode.strategies.targetvelocitycalculationstrategy.ConstantTargetVelocityCalculationStrategy;
@@ -17,6 +18,8 @@ import org.firstinspires.ftc.teamcode.strategies.targetvelocitycalculationstrate
 
 public class LauncherSubsystem extends SubsystemBase {
     private static final double VELOCITY_TOLERANCE = 30.0;
+    private static final double BANG_BANG_THRESHOLD = 200.0;
+    private static final double BANG_BANG_POWER = 1.0;
 
     private final DcMotorEx launcherMotor;
     private final VoltageSensor battery;
@@ -24,9 +27,12 @@ public class LauncherSubsystem extends SubsystemBase {
     private final Pose goalPose;
     private final TargetVelocityCalculationStrategy targetVelocityCalculationStrategy;
     private final LauncherPIDFCalculationStrategy launcherPidfCalculationStrategy;
+    private final BangBangController bangBangController;
 
     private boolean isLaunching;
+    private double targetVelocity;
     private PIDFCoefficients activePidfCoefficients;
+    private boolean usingBangBang;
 
     public LauncherSubsystem(HardwareMap hardwareMap, Follower follower, Pose goalPose) {
         this.launcherMotor = hardwareMap.get(DcMotorEx.class, Preferences.LAUNCHER_MOTOR);
@@ -35,25 +41,55 @@ public class LauncherSubsystem extends SubsystemBase {
         this.goalPose = goalPose;
         this.targetVelocityCalculationStrategy = new ConstantTargetVelocityCalculationStrategy();
         this.launcherPidfCalculationStrategy = new SmartLauncherPIDFCalculationStrategy();
+        this.bangBangController = new BangBangController(BANG_BANG_THRESHOLD, BANG_BANG_POWER);
         this.isLaunching = false;
+        this.targetVelocity = 0.0;
         this.activePidfCoefficients = null;
+        this.usingBangBang = false;
 
         launcherMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         launcherMotor.setDirection(Preferences.Launcher.DIRECTION);
     }
 
     public void startLaunching() {
-        double targetVelocity = getTargetVelocity();
+        targetVelocity = calculateTargetVelocity();
         activePidfCoefficients = getCurrentPIDFCoefficients();
-        launcherMotor.setPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER, activePidfCoefficients);
-        launcherMotor.setVelocity(targetVelocity);
         isLaunching = true;
+        usingBangBang = true;
     }
 
     public void stopLaunching() {
         launcherMotor.setPower(0.0);
         activePidfCoefficients = null;
+        targetVelocity = 0.0;
         isLaunching = false;
+        usingBangBang = false;
+    }
+
+    @Override
+    public void periodic() {
+        if (!isLaunching) {
+            return;
+        }
+
+        double error = getVelocityError();
+
+        if (bangBangController.shouldUseBangBang(error)) {
+            if (!usingBangBang) {
+                launcherMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                usingBangBang = true;
+            }
+            double power = bangBangController.calculate(error);
+            launcherMotor.setPower(power);
+        }
+        else {
+            if (usingBangBang) {
+                launcherMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                launcherMotor.setPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER, activePidfCoefficients);
+                launcherMotor.setVelocity(targetVelocity);
+                usingBangBang = false;
+            }
+        }
     }
 
     public void setPower(double power) {
@@ -80,11 +116,15 @@ public class LauncherSubsystem extends SubsystemBase {
     }
 
     public double getTargetVelocity() {
+        return targetVelocity;
+    }
+
+    private double calculateTargetVelocity() {
         return targetVelocityCalculationStrategy.getCalculatedTargetVelocity(getDistanceToGoal());
     }
 
     public PIDFCoefficients getCurrentPIDFCoefficients() {
-        return launcherPidfCalculationStrategy.getCalculatedPidf(getTargetVelocity(), getBatteryVoltage());
+        return launcherPidfCalculationStrategy.getCalculatedPidf(targetVelocity, getBatteryVoltage());
     }
 
     public double getP() {
@@ -124,11 +164,10 @@ public class LauncherSubsystem extends SubsystemBase {
     }
 
     public double getVelocityError() {
-        return getTargetVelocity() - getVelocityMagnitude();
+        return targetVelocity - getVelocityMagnitude();
     }
 
     public double getPercentError() {
-        double targetVelocity = getTargetVelocity();
         if (targetVelocity == 0.0) {
             return 0.0;
         }
@@ -136,10 +175,13 @@ public class LauncherSubsystem extends SubsystemBase {
     }
 
     public void setVelocity(double velocity) {
+        this.targetVelocity = velocity;
         launcherMotor.setVelocity(velocity);
     }
 
     public void setVelocityWithPIDF(double velocity, PIDFCoefficients pidfCoefficients) {
+        this.targetVelocity = velocity;
+        this.activePidfCoefficients = pidfCoefficients;
         launcherMotor.setPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER, pidfCoefficients);
         launcherMotor.setVelocity(velocity);
     }
@@ -154,5 +196,13 @@ public class LauncherSubsystem extends SubsystemBase {
 
     public Pose getGoalPose() {
         return goalPose;
+    }
+
+    public boolean isUsingBangBang() {
+        return usingBangBang;
+    }
+
+    public BangBangController getBangBangController() {
+        return bangBangController;
     }
 }

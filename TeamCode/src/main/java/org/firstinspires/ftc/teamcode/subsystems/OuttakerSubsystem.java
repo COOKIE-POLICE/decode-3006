@@ -17,11 +17,11 @@ public class OuttakerSubsystem extends SubsystemBase {
         rightOuttakeServo.setDirection(Servo.Direction.REVERSE);
     }
     public void push() {
-        leftOuttakeServo.setPosition(1);
-        rightOuttakeServo.setPosition(1);
+        leftOuttakeServo.setPosition(0.0);
+        rightOuttakeServo.setPosition(1.0);
     }
     public void hold() {
-        leftOuttakeServo.setPosition(0);
-        rightOuttakeServo.setPosition(0);
+        leftOuttakeServo.setPosition(1.0);
+        rightOuttakeServo.setPosition(0.0);
     }
 }

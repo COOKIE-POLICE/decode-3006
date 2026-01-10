@@ -114,7 +114,7 @@ public class BlueFarAutonomous extends CommandOpMode {
 
     @Override
     public void initialize() {
-        launcherSubsystem = new LauncherSubsystem(hardwareMap);
+        launcherSubsystem = new LauncherSubsystem(hardwareMap, follower, Preferences.Poses.BLUE_GOAL_POSE);
         indexerSubsystem = new IndexerSubsystem(hardwareMap);
         intakeSubsystem = new IntakeSubsystem(hardwareMap);
         outtakerSubsystem = new OuttakerSubsystem(hardwareMap);
@@ -128,37 +128,33 @@ public class BlueFarAutonomous extends CommandOpMode {
 
         SequentialCommandGroup autonomousSequence = new SequentialCommandGroup(
                 new LaunchCommand(launcherSubsystem),
-                new FollowPathCommand(follower, scorePreload),
-                new WaitCommand(1000),
+                new GoToPoseCommand(follower, Preferences.Poses.BLUE_LAUNCH_POSE),
+                new WaitCommand(5000),
                 new IntakeCommand(intakeSubsystem),
-                new WaitCommand(3000),
-
+                new WaitCommand(500),
                 new GoToPoseCommand(follower, Preferences.Poses.BLUE_GATE_RELEASE_POSE),
-
-                new FollowPathCommand(follower, grabOneStart),
+                new GoToPoseCommand(follower, Preferences.Poses.BLUE_GRAB_POSE_ONE_START),
                 new IntakeCommand(intakeSubsystem),
-                new FollowPathCommand(follower, grabOneEnd),
+                new GoToPoseCommand(follower, Preferences.Poses.BLUE_GRAB_POSE_ONE_END),
                 new StopIntakeCommand(intakeSubsystem),
                 new WaitCommand(500),
-                new FollowPathCommand(follower, grabOneLaunch),
+                new GoToPoseCommand(follower, Preferences.Poses.CLOSE_BLUE_LAUNCH_POSE, 0.5),
                 new WaitCommand(1000),
                 new WaitCommand(3000),
-
-                new FollowPathCommand(follower, grabTwoStart),
+                new GoToPoseCommand(follower, Preferences.Poses.BLUE_GRAB_POSE_TWO_START),
                 new IntakeCommand(intakeSubsystem),
-                new FollowPathCommand(follower, grabTwoEnd),
+                new GoToPoseCommand(follower, Preferences.Poses.BLUE_GRAB_POSE_TWO_END,0.5),
                 new StopIntakeCommand(intakeSubsystem),
                 new WaitCommand(500),
-                new FollowPathCommand(follower, grabTwoLaunch),
+                new GoToPoseCommand(follower, Preferences.Poses.CLOSE_BLUE_LAUNCH_POSE),
                 new WaitCommand(1000),
                 new WaitCommand(3000),
-
-                new FollowPathCommand(follower, grabThreeStart),
+                new GoToPoseCommand(follower, Preferences.Poses.BLUE_GRAB_POSE_THREE_START),
                 new IntakeCommand(intakeSubsystem),
-                new FollowPathCommand(follower, grabThreeEnd),
+                new GoToPoseCommand(follower, Preferences.Poses.BLUE_GRAB_POSE_THREE_END, 0.5),
                 new StopIntakeCommand(intakeSubsystem),
                 new WaitCommand(500),
-                new FollowPathCommand(follower, grabThreeLaunch),
+                new GoToPoseCommand(follower, Preferences.Poses.BLUE_LAUNCH_POSE),
                 new WaitCommand(1000),
                 new WaitCommand(3000),
                 new StopLaunchCommand(launcherSubsystem)

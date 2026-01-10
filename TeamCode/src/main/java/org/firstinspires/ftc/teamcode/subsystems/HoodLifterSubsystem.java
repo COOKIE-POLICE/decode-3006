@@ -18,7 +18,6 @@ public class HoodLifterSubsystem extends SubsystemBase {
             leftHoodServo.setDirection(Servo.Direction.REVERSE);
             rightHoodServo.setDirection(Servo.Direction.REVERSE);
         }
-        setPosition(Preferences.Hood.POSITION_DOWN);
     }
 
     public void setPosition(double position) {

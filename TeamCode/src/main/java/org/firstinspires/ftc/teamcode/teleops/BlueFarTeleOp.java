@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
+import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
 import com.seattlesolvers.solverslib.command.button.Trigger;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
@@ -32,7 +33,6 @@ import org.firstinspires.ftc.teamcode.subsystems.HoodLifterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IndexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LauncherSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.LimelightSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.OuttakerSubsystem;
 
 import java.util.function.DoubleSupplier;
@@ -53,7 +53,6 @@ public class BlueFarTeleOp extends CommandOpMode {
     private LauncherSubsystem launcherSubsystem;
     private HoodLifterSubsystem hoodLifterSubsystem;
     private OuttakerSubsystem outtakerSubsystem;
-    private LimelightSubsystem limelightSubsystem;
 
     private PedroPathingDriveCommand normalDriveCommand;
     private GamepadEx driverOp;
@@ -64,26 +63,10 @@ public class BlueFarTeleOp extends CommandOpMode {
     private Trigger rightTriggerActive;
     private Trigger leftTriggerActive;
     private Trigger noTriggersActive;
+    private Trigger atLaunchVelocityTrigger;
 
     @Override
     public void initialize() {
-        _initializeHardware();
-        _initializeSubsystems();
-        _initializeInputSuppliers();
-        _initializeTriggers();
-        _configureDefaultCommand();
-        _configureBindings();
-
-        limelightSubsystem.switchPipeline(Preferences.Limelight.PIPELINE_BLUE_GOAL);
-    }
-
-    @Override
-    public void run() {
-        super.run();
-        follower.update();
-    }
-
-    private void _initializeHardware() {
         follower = Constants.createFollower(hardwareMap);
         driverOp = new GamepadEx(gamepad1);
 
@@ -98,24 +81,18 @@ public class BlueFarTeleOp extends CommandOpMode {
         follower.update();
         follower.startTeleopDrive();
         follower.setStartingPose(STARTING_POSE);
-    }
 
-    private void _initializeSubsystems() {
         intakeSubsystem = new IntakeSubsystem(hardwareMap);
         indexerSubsystem = new IndexerSubsystem(hardwareMap);
-        launcherSubsystem = new LauncherSubsystem(hardwareMap);
+        launcherSubsystem = new LauncherSubsystem(hardwareMap, follower, Preferences.Poses.BLUE_GOAL_POSE);
         hoodLifterSubsystem = new HoodLifterSubsystem(hardwareMap);
         outtakerSubsystem = new OuttakerSubsystem(hardwareMap);
-        limelightSubsystem = new LimelightSubsystem(hardwareMap, "limelight");
-    }
 
-    private void _initializeInputSuppliers() {
+
         forward = () -> driverOp.getLeftY();
         strafe = () -> -driverOp.getLeftX();
         rotate = () -> -driverOp.getRightX();
-    }
 
-    private void _initializeTriggers() {
         joystickMovementTrigger = new Trigger(this::_isJoystickMoving);
 
         rightTriggerActive = new Trigger(() ->
@@ -125,11 +102,12 @@ public class BlueFarTeleOp extends CommandOpMode {
         leftTriggerActive = new Trigger(() ->
                 driverOp.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > TRIGGER_DEADZONE
         );
+        atLaunchVelocityTrigger = new Trigger(
+                () -> launcherSubsystem.isAtTargetVelocity()
+        );
 
         noTriggersActive = rightTriggerActive.negate().and(leftTriggerActive.negate());
-    }
 
-    private void _configureDefaultCommand() {
         normalDriveCommand = new PedroPathingDriveCommand(follower, forward, strafe, rotate);
         schedule(normalDriveCommand);
 
@@ -141,17 +119,7 @@ public class BlueFarTeleOp extends CommandOpMode {
                     }
                 })
         );
-    }
 
-    private void _configureBindings() {
-        _configureIntakeBindings();
-        _configureLauncherBindings();
-        _configureIndexerBindings();
-        _configureOuttakerBindings();
-        _configureNavigationBindings();
-    }
-
-    private void _configureIntakeBindings() {
         driverOp.getGamepadButton(GamepadKeys.Button.A)
                 .toggleWhenPressed(
                         new IntakeCommand(intakeSubsystem),
@@ -163,9 +131,7 @@ public class BlueFarTeleOp extends CommandOpMode {
                         new EjectCommand(intakeSubsystem),
                         new StopIntakeCommand(intakeSubsystem)
                 );
-    }
 
-    private void _configureLauncherBindings() {
         driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
                 .toggleWhenPressed(
                         new LaunchCommand(launcherSubsystem),
@@ -177,23 +143,24 @@ public class BlueFarTeleOp extends CommandOpMode {
                         new HoodUpCommand(hoodLifterSubsystem),
                         new HoodDownCommand(hoodLifterSubsystem)
                 );
-    }
 
-    private void _configureIndexerBindings() {
-        rightTriggerActive.whileActiveContinuous(new IndexRightCommand(indexerSubsystem));
-        leftTriggerActive.whileActiveContinuous(new IndexLeftCommand(indexerSubsystem));
-        noTriggersActive.whileActiveContinuous(new StopIndexCommand(indexerSubsystem));
-    }
-
-    private void _configureOuttakerBindings() {
-        driverOp.getGamepadButton(GamepadKeys.Button.Y)
-                .toggleWhenPressed(
-                        new OuttakePushCommand(outtakerSubsystem),
+        rightTriggerActive.whenActive(new IndexRightCommand(indexerSubsystem));
+        leftTriggerActive.whenActive(new IndexLeftCommand(indexerSubsystem));
+        noTriggersActive.whenActive(new StopIndexCommand(indexerSubsystem));
+        /*
+        atLaunchVelocityTrigger
+                .whenActive(
+                        new ParallelCommandGroup(
+                                new IndexRightCommand(indexerSubsystem),
+                                new OuttakePushCommand(outtakerSubsystem)
+                                )
+                )
+                .whenInactive(new ParallelCommandGroup(
+                        new StopIndexCommand(indexerSubsystem),
                         new OuttakeHoldCommand(outtakerSubsystem)
-                );
-    }
+                ));
+                */
 
-    private void _configureNavigationBindings() {
         driverOp.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
                 .whenPressed(new GoToPoseCommand(follower, Preferences.Poses.BLUE_LAUNCH_POSE));
 
@@ -202,6 +169,37 @@ public class BlueFarTeleOp extends CommandOpMode {
 
         driverOp.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
                 .whenPressed(new GoToPoseCommand(follower, Preferences.Poses.BLUE_PARK_POSE));
+        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_UP)
+                .whenPressed(new GoToPoseCommand(follower, Preferences.Poses.CLOSE_BLUE_LAUNCH_POSE));
+    }
+
+    @Override
+    public void run() {
+        telemetry.addLine("=== LAUNCHER STATUS ===");
+        telemetry.addData("Is Launching", launcherSubsystem.isLaunching());
+        telemetry.addData("At Target", launcherSubsystem.isAtTargetVelocity());
+        telemetry.addData("Launcher F", launcherSubsystem.getF());
+        telemetry.addLine();
+
+        telemetry.addLine("=== VELOCITY ===");
+        telemetry.addData("Current Velocity", "%.2f", launcherSubsystem.getVelocityMagnitude());
+        telemetry.addData("Target Velocity", "%.2f", launcherSubsystem.getTargetVelocity());
+        telemetry.addData("Velocity Error", "%.2f", launcherSubsystem.getVelocityError());
+        telemetry.addData("Percent Error", "%.2f%%", launcherSubsystem.getPercentError());
+        telemetry.addLine();
+
+        telemetry.addLine("=== POSITION ===");
+        telemetry.addData("Distance to Goal", "%.2f", launcherSubsystem.getDistanceToGoal());
+        telemetry.addData("Current Pose", launcherSubsystem.getCurrentPose().toString());
+        telemetry.addLine();
+
+        telemetry.addLine("=== POWER ===");
+        telemetry.addData("Motor Power", "%.3f", launcherSubsystem.getPower());
+        telemetry.addData("Battery Voltage", "%.2fV", launcherSubsystem.getBatteryVoltage());
+
+        telemetry.update();
+        super.run();
+        follower.update();
     }
 
     private boolean _isJoystickMoving() {

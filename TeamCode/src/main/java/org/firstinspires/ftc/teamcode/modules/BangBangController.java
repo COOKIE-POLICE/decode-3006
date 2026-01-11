@@ -17,7 +17,7 @@ public class BangBangController {
         if (error > bangBangThreshold) {
             return bangBangPower;
         } else if (error < -bangBangThreshold) {
-            return -bangBangPower;
+            return 0.0;
         }
         return 0.0;
     }

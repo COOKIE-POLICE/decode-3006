@@ -90,10 +90,10 @@ public class Constants {
 
     public static PathConstraints pathConstraints = new PathConstraints(
             1,
-            0.1,
-            0.01,
+            0.0,
             0.001,
-            50,
+            0.001,
+            125,
             1.25,
             10,
             1

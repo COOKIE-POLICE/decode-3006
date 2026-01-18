@@ -20,16 +20,21 @@ import org.firstinspires.ftc.teamcode.commands.IndexLeftCommand;
 import org.firstinspires.ftc.teamcode.commands.IndexRightCommand;
 import org.firstinspires.ftc.teamcode.commands.IntakeCommand;
 import org.firstinspires.ftc.teamcode.commands.LaunchCommand;
+import org.firstinspires.ftc.teamcode.commands.OuttakeHoldCommand;
+import org.firstinspires.ftc.teamcode.commands.OuttakePushCommand;
 import org.firstinspires.ftc.teamcode.commands.PedroPathingDriveCommand;
 import org.firstinspires.ftc.teamcode.commands.StopIndexCommand;
 import org.firstinspires.ftc.teamcode.commands.StopIntakeCommand;
 import org.firstinspires.ftc.teamcode.commands.StopLaunchCommand;
+import org.firstinspires.ftc.teamcode.commands.TurnIndicatorGreenCommand;
+import org.firstinspires.ftc.teamcode.commands.TurnIndicatorOffCommand;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.subsystems.HoodLifterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IndexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LauncherSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.OuttakerSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.IndicatorSubsystem;
 
 import java.util.function.DoubleSupplier;
 
@@ -47,6 +52,7 @@ public abstract class BaseTeleOp extends CommandOpMode {
     private LauncherSubsystem launcherSubsystem;
     private HoodLifterSubsystem hoodLifterSubsystem;
     private OuttakerSubsystem outtakerSubsystem;
+    private IndicatorSubsystem indicatorSubsystem;
 
     private PedroPathingDriveCommand normalDriveCommand;
     private GamepadEx driverOp;
@@ -88,6 +94,7 @@ public abstract class BaseTeleOp extends CommandOpMode {
         launcherSubsystem = new LauncherSubsystem(hardwareMap, follower, getGoalPose());
         hoodLifterSubsystem = new HoodLifterSubsystem(hardwareMap);
         outtakerSubsystem = new OuttakerSubsystem(hardwareMap);
+        indicatorSubsystem = new IndicatorSubsystem(hardwareMap);
 
         forward = () -> driverOp.getLeftY();
         strafe = () -> -driverOp.getLeftX();
@@ -111,6 +118,7 @@ public abstract class BaseTeleOp extends CommandOpMode {
 
         normalDriveCommand = new PedroPathingDriveCommand(follower, forward, strafe, rotate);
         schedule(normalDriveCommand);
+        schedule(new TurnIndicatorOffCommand(indicatorSubsystem));
 
         _configureButtonBindings();
     }
@@ -153,6 +161,13 @@ public abstract class BaseTeleOp extends CommandOpMode {
         leftTriggerActive.whenActive(new IndexLeftCommand(indexerSubsystem));
         noTriggersActive.whenActive(new StopIndexCommand(indexerSubsystem));
 
+        atLaunchVelocityTrigger
+                .whileActiveContinuous(new TurnIndicatorGreenCommand(indicatorSubsystem));
+
+        atLaunchVelocityTrigger
+                .negate()
+                .whileActiveContinuous(new TurnIndicatorOffCommand(indicatorSubsystem));
+
         driverOp.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
                 .whenPressed(new GoToPoseCommand(follower, getLaunchPose()));
 
@@ -164,6 +179,10 @@ public abstract class BaseTeleOp extends CommandOpMode {
 
         driverOp.getGamepadButton(GamepadKeys.Button.DPAD_UP)
                 .whenPressed(new GoToPoseCommand(follower, getCloseLaunchPose()));
+        driverOp.getGamepadButton(GamepadKeys.Button.Y).toggleWhenPressed(
+                new OuttakePushCommand(outtakerSubsystem),
+                new OuttakeHoldCommand(outtakerSubsystem)
+        );
     }
 
     @Override

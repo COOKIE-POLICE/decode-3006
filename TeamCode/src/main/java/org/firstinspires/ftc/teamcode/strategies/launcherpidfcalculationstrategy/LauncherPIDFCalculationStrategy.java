@@ -3,5 +3,5 @@ package org.firstinspires.ftc.teamcode.strategies.launcherpidfcalculationstrateg
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 public interface LauncherPIDFCalculationStrategy {
-    PIDFCoefficients getCalculatedPidf(double targetVelocity, double batteryVoltage);
+    PIDFCoefficients getCalculatedPidf(double targetVelocity, double batteryVoltage, double currentVelocity);
 }

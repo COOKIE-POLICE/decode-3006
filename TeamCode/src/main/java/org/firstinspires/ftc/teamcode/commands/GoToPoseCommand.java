@@ -43,7 +43,7 @@ public class GoToPoseCommand extends CommandBase {
 
         pathChain = follower.pathBuilder()
                 .addPath(new BezierLine(currentPose, targetPose))
-                .setLinearHeadingInterpolation(currentPose.getHeading(), targetPose.getHeading())
+                .setConstantHeadingInterpolation(targetPose.getHeading())
                 .build();
 
         follower.followPath(pathChain, maxPower, holdEnd);

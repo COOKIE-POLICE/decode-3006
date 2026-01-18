@@ -1,12 +1,9 @@
-package org.firstinspires.ftc.teamcode.autonomous;
+package org.firstinspires.ftc.teamcode.autonomous.threeartifact;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-
 import com.seattlesolvers.solverslib.command.CommandOpMode;
-import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
-import com.seattlesolvers.solverslib.command.RepeatCommand;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.command.WaitUntilCommand;
@@ -24,7 +21,6 @@ import org.firstinspires.ftc.teamcode.commands.StopIntakeCommand;
 import org.firstinspires.ftc.teamcode.commands.StopLaunchCommand;
 import org.firstinspires.ftc.teamcode.commands.TurnIndicatorGreenCommand;
 import org.firstinspires.ftc.teamcode.commands.TurnIndicatorOffCommand;
-import org.firstinspires.ftc.teamcode.commands.TurnToPoseCommand;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.subsystems.HoodLifterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IndexerSubsystem;
@@ -33,13 +29,14 @@ import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LauncherSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.OuttakerSubsystem;
 
-@Autonomous
-public class BlueFarAutonomous extends CommandOpMode {
-    private static final int SHOOTING_DURATION_MS = 5000;
-    private static final double INTAKE_MOVEMENT_SPEED = 0.5;
+
+public abstract class BaseThreeArtifactAutonomous extends CommandOpMode {
+    protected abstract Pose getMovementPose();
+    protected abstract Pose getStartingPose();
+    protected abstract Pose getLaunchPose();
 
     private Follower follower;
-    private TelemetryData telemetryData;
+    TelemetryData telemetryData = new TelemetryData(telemetry);
     private LauncherSubsystem launcherSubsystem;
     private HoodLifterSubsystem hoodLifterSubsystem;
     private IndexerSubsystem indexerSubsystem;
@@ -50,10 +47,6 @@ public class BlueFarAutonomous extends CommandOpMode {
 
     @Override
     public void initialize() {
-        follower = Constants.createFollower(hardwareMap);
-        telemetryData = new TelemetryData(telemetry);
-
-        launcherSubsystem = new LauncherSubsystem(hardwareMap, follower, Preferences.Poses.BLUE_GOAL_POSE);
         indexerSubsystem = new IndexerSubsystem(hardwareMap);
         intakeSubsystem = new IntakeSubsystem(hardwareMap);
         outtakerSubsystem = new OuttakerSubsystem(hardwareMap);
@@ -61,18 +54,33 @@ public class BlueFarAutonomous extends CommandOpMode {
         indicatorSubsystem = new IndicatorSubsystem(hardwareMap);
 
         super.reset();
-        follower.setStartingPose(Preferences.Poses.StartingPoses.BLUE_FAR_START_POSE);
+
+        follower = Constants.createFollower(hardwareMap);
+        follower.setStartingPose(getStartingPose());
+        launcherSubsystem = new LauncherSubsystem(hardwareMap, follower, Preferences.Poses.BLUE_GOAL_POSE);
 
         SequentialCommandGroup autonomousSequence = new SequentialCommandGroup(
+                new GoToPoseCommand(follower, getLaunchPose()),
+                new GoToPoseCommand(follower, getLaunchPose()),
 
-                shootArtifacts(),
-                collectArtifactsFromRow(Preferences.Poses.BLUE_GRAB_POSE_ONE_START, Preferences.Poses.BLUE_GRAB_POSE_ONE_END),
-
-                shootArtifacts(),
-                new GoToPoseCommand(follower, Preferences.Poses.MovementPoses.MOVEMENT_BLUE_FAR_POSE)
+                new LaunchCommand(launcherSubsystem),
+                new WaitUntilCommand(() -> launcherSubsystem.isAtTargetVelocity()),
+                new WaitCommand(1000),
+                new IntakeCommand(intakeSubsystem),
+                new IndexRightCommand(indexerSubsystem),
+                new WaitCommand(3000),
+                new IndexLeftCommand(indexerSubsystem),
+                new WaitCommand(3000),
+                new IndexRightCommand(indexerSubsystem),
+                new WaitCommand(3000),
+                new StopLaunchCommand(launcherSubsystem),
+                new StopIndexCommand(indexerSubsystem),
+                new StopIntakeCommand(intakeSubsystem),
+                new GoToPoseCommand(follower, getMovementPose()),
+                new StopLaunchCommand(launcherSubsystem),
+                new StopIndexCommand(indexerSubsystem),
+                new StopIntakeCommand(intakeSubsystem)
         );
-
-        schedule(autonomousSequence);
         atLaunchVelocityTrigger = new Trigger(
                 () -> launcherSubsystem.isAtTargetVelocity()
         );
@@ -82,41 +90,7 @@ public class BlueFarAutonomous extends CommandOpMode {
         atLaunchVelocityTrigger
                 .negate()
                 .whileActiveContinuous(new TurnIndicatorOffCommand(indicatorSubsystem));
-    }
-
-    private SequentialCommandGroup shootArtifacts() {
-        return new SequentialCommandGroup(
-                new GoToPoseCommand(follower, Preferences.Poses.LaunchingPoses.BLUE_LAUNCH_POSE),
-                new GoToPoseCommand(follower, Preferences.Poses.LaunchingPoses.BLUE_LAUNCH_POSE),
-                new LaunchCommand(launcherSubsystem),
-                new WaitUntilCommand(() -> launcherSubsystem.isAtTargetVelocity()),
-                shootSingleArtifact(),
-                shootSingleArtifact(),
-                shootSingleArtifact(),
-                new StopIntakeCommand(intakeSubsystem),
-                new StopIndexCommand(indexerSubsystem),
-                new StopLaunchCommand(launcherSubsystem)
-        );
-    }
-
-    private SequentialCommandGroup shootSingleArtifact() {
-        return new SequentialCommandGroup(
-                new IntakeCommand(intakeSubsystem),
-                new IndexRightCommand(indexerSubsystem),
-                new WaitCommand(3000),
-                new StopIntakeCommand(intakeSubsystem),
-                new StopIndexCommand(indexerSubsystem)
-        );
-    }
-
-    private SequentialCommandGroup collectArtifactsFromRow(Pose startPose, Pose endPose) {
-        return new SequentialCommandGroup(
-                new GoToPoseCommand(follower, startPose),
-                new IntakeCommand(intakeSubsystem),
-                new GoToPoseCommand(follower, endPose, INTAKE_MOVEMENT_SPEED),
-                new StopIntakeCommand(intakeSubsystem),
-                new GoToPoseCommand(follower, startPose)
-        );
+        schedule(autonomousSequence);
     }
 
     @Override
@@ -124,10 +98,13 @@ public class BlueFarAutonomous extends CommandOpMode {
         super.run();
         follower.update();
 
-        Pose currentPose = follower.getPose();
-        telemetryData.addData("X", currentPose.getX());
-        telemetryData.addData("Y", currentPose.getY());
-        telemetryData.addData("Heading", currentPose.getHeading());
+        telemetryData.addData("X", follower.getPose().getX());
+        telemetryData.addData("Y", follower.getPose().getY());
+        telemetryData.addData("Heading", follower.getPose().getHeading());
+        telemetry.addData("Current Velocity", "%.2f", launcherSubsystem.getVelocityMagnitude());
+        telemetry.addData("Target Velocity", "%.2f", launcherSubsystem.getTargetVelocity());
+        telemetry.addData("Velocity Error", "%.2f", launcherSubsystem.getVelocityError());
+        telemetry.addData("Percent Error", "%.2f%%", launcherSubsystem.getPercentError());
         telemetryData.update();
     }
 }

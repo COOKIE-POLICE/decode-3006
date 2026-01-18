@@ -5,12 +5,12 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 public class SmartLauncherPIDFCalculationStrategy implements LauncherPIDFCalculationStrategy {
 
-    public static final double kV = 12.0;
+    public static final double kV = 12.9;
     public static final double nominalVoltage = 13.7;
 
     // Asymmetric P gains
-    private static final double P_UP = 1.5;
-    private static final double P_DOWN = 0.005;
+    private static final double P_UP = 2.0;
+    private static final double P_DOWN = 0.0;
 
     @Override
     public PIDFCoefficients getCalculatedPidf(

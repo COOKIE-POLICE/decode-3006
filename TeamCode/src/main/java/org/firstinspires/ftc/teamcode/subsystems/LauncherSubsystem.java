@@ -16,7 +16,7 @@ import org.firstinspires.ftc.teamcode.strategies.targetvelocitycalculationstrate
 import org.firstinspires.ftc.teamcode.strategies.targetvelocitycalculationstrategy.TargetVelocityCalculationStrategy;
 
 public class LauncherSubsystem extends SubsystemBase {
-    private static final double VELOCITY_TOLERANCE = 30.0;
+    private static final double VELOCITY_TOLERANCE = 1.5;
 
     private final DcMotorEx launcherMotor;
     private final VoltageSensor battery;
@@ -123,7 +123,7 @@ public class LauncherSubsystem extends SubsystemBase {
     }
 
     public boolean isAtTargetVelocity() {
-        return Math.abs(getVelocityError()) < VELOCITY_TOLERANCE;
+        return getPercentError() < VELOCITY_TOLERANCE;
     }
 
     public double getVelocityError() {

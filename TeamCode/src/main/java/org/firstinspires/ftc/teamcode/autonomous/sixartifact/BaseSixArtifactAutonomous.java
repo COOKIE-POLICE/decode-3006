@@ -12,6 +12,8 @@ import com.seattlesolvers.solverslib.util.TelemetryData;
 
 import org.firstinspires.ftc.teamcode.Preferences;
 import org.firstinspires.ftc.teamcode.commands.GoToPoseCommand;
+import org.firstinspires.ftc.teamcode.commands.HoodDownCommand;
+import org.firstinspires.ftc.teamcode.commands.HoodUpCommand;
 import org.firstinspires.ftc.teamcode.commands.IndexLeftCommand;
 import org.firstinspires.ftc.teamcode.commands.IndexRightCommand;
 import org.firstinspires.ftc.teamcode.commands.IntakeCommand;
@@ -65,6 +67,7 @@ public abstract class BaseSixArtifactAutonomous extends CommandOpMode {
 
                 new GoToPoseCommand(follower, getLaunchPose()),
                 new GoToPoseCommand(follower, getLaunchPose()),
+                new HoodDownCommand(hoodLifterSubsystem),
                 new LaunchCommand(launcherSubsystem),
                 new WaitUntilCommand(() -> launcherSubsystem.isAtTargetVelocity()),
                 new WaitCommand(1000),
@@ -80,14 +83,17 @@ public abstract class BaseSixArtifactAutonomous extends CommandOpMode {
                 new StopIntakeCommand(intakeSubsystem),
 
                 new GoToPoseCommand(follower, getHumanPlayerGrabStart()),
+                new HoodUpCommand(hoodLifterSubsystem),
                 new IntakeCommand(intakeSubsystem),
                 new GoToPoseCommand(follower, getHumanPlayerGrabEnd(), 0.45),
                 new WaitCommand(500),
+                new StopIntakeCommand(intakeSubsystem),
 
                 new GoToPoseCommand(follower, getLaunchPose()),
                 new GoToPoseCommand(follower, getLaunchPose()),
                 new LaunchCommand(launcherSubsystem),
                 new WaitUntilCommand(() -> launcherSubsystem.isAtTargetVelocity()),
+                new HoodDownCommand(hoodLifterSubsystem),
                 new WaitCommand(1000),
                 new IntakeCommand(intakeSubsystem),
                 new IndexRightCommand(indexerSubsystem),

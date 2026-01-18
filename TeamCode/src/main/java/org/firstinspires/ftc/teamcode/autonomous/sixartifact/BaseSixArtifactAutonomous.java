@@ -129,6 +129,7 @@ public abstract class BaseSixArtifactAutonomous extends CommandOpMode {
     public void run() {
         super.run();
         follower.update();
+        /*
 
         telemetryData.addData("X", follower.getPose().getX());
         telemetryData.addData("Y", follower.getPose().getY());
@@ -138,5 +139,6 @@ public abstract class BaseSixArtifactAutonomous extends CommandOpMode {
         telemetry.addData("Velocity Error", "%.2f", launcherSubsystem.getVelocityError());
         telemetry.addData("Percent Error", "%.2f%%", launcherSubsystem.getPercentError());
         telemetryData.update();
+         */
     }
 }

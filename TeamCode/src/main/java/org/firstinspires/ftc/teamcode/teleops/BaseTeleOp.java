@@ -187,6 +187,7 @@ public abstract class BaseTeleOp extends CommandOpMode {
 
     @Override
     public void run() {
+        /*
         telemetry.addLine("=== LAUNCHER STATUS ===");
         telemetry.addData("Is Launching", launcherSubsystem.isLaunching());
         telemetry.addData("At Target", launcherSubsystem.isAtTargetVelocity());
@@ -210,6 +211,7 @@ public abstract class BaseTeleOp extends CommandOpMode {
         telemetry.addData("Battery Voltage", "%.2fV", launcherSubsystem.getBatteryVoltage());
 
         telemetry.update();
+        */
         super.run();
         follower.update();
     }

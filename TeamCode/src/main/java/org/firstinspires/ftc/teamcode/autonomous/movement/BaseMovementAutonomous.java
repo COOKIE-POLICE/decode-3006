@@ -34,10 +34,12 @@ public abstract class BaseMovementAutonomous extends CommandOpMode {
     public void run() {
         super.run();
         follower.update();
+        /*
 
         telemetryData.addData("X", follower.getPose().getX());
         telemetryData.addData("Y", follower.getPose().getY());
         telemetryData.addData("Heading", follower.getPose().getHeading());
         telemetryData.update();
+         */
     }
 }

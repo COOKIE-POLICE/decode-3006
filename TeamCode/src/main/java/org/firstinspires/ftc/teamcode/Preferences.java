@@ -87,7 +87,7 @@ public class Preferences {
     public static class Launcher {
         public static PIDFCoefficients pidfCoefficients = new PIDFCoefficients(5.0, 0.0, 0.0, 12.0);
         public static DcMotorSimple.Direction DIRECTION = DcMotorSimple.Direction.REVERSE;
-        public static double TARGET_VELOCITY = 1735;
+        public static double TARGET_VELOCITY = 1850;
     }
 
     @Configurable

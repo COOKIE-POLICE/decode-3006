@@ -2,9 +2,11 @@ package org.firstinspires.ftc.teamcode.autonomous.sixartifact;
 
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.Preferences;
 @Autonomous
+@Disabled
 public class SixArtifactRedFarAutonomous extends BaseSixArtifactAutonomous {
     @Override
     protected Pose getStartingPose() {

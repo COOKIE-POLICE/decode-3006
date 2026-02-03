@@ -5,11 +5,10 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 public class SmartLauncherPIDFCalculationStrategy implements LauncherPIDFCalculationStrategy {
 
-    public static final double kV = 12.9;
-    public static final double nominalVoltage = 13.7;
+    public static final double kV = 12.0;
 
     // Asymmetric P gains
-    private static final double P_UP = 2.0;
+    private static final double P_UP = 5.0;
     private static final double P_DOWN = 0.0;
 
     @Override
@@ -18,7 +17,7 @@ public class SmartLauncherPIDFCalculationStrategy implements LauncherPIDFCalcula
             double batteryVoltage,
             double currentVelocity
     ) {
-        double feedforward = kV * (nominalVoltage / batteryVoltage);
+        double feedforward = kV;
 
         double proportional =
                 currentVelocity < targetVelocity ? P_UP : P_DOWN;

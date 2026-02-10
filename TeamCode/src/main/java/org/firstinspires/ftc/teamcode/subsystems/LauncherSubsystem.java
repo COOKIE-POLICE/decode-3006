@@ -11,12 +11,14 @@ import com.seattlesolvers.solverslib.command.SubsystemBase;
 
 import org.firstinspires.ftc.teamcode.Preferences;
 import org.firstinspires.ftc.teamcode.strategies.launcherpidfcalculationstrategy.LauncherPIDFCalculationStrategy;
+import org.firstinspires.ftc.teamcode.strategies.launcherpidfcalculationstrategy.PreferencesLauncherPIDFCalculationStrategy;
 import org.firstinspires.ftc.teamcode.strategies.launcherpidfcalculationstrategy.SmartLauncherPIDFCalculationStrategy;
+import org.firstinspires.ftc.teamcode.strategies.targetvelocitycalculationstrategy.InterpolatedTargetVelocityCalculationStrategy;
 import org.firstinspires.ftc.teamcode.strategies.targetvelocitycalculationstrategy.PreferencesTargetVelocityCalculationStrategy;
 import org.firstinspires.ftc.teamcode.strategies.targetvelocitycalculationstrategy.TargetVelocityCalculationStrategy;
 
 public class LauncherSubsystem extends SubsystemBase {
-    private static final double VELOCITY_TOLERANCE = 1.5;
+    private static final double VELOCITY_TOLERANCE = 1.0;
 
     private final DcMotorEx launcherMotor;
     private final VoltageSensor battery;
@@ -33,7 +35,7 @@ public class LauncherSubsystem extends SubsystemBase {
         this.battery = hardwareMap.voltageSensor.iterator().next();
         this.follower = follower;
         this.goalPose = goalPose;
-        this.targetVelocityCalculationStrategy = new PreferencesTargetVelocityCalculationStrategy();
+        this.targetVelocityCalculationStrategy = new InterpolatedTargetVelocityCalculationStrategy();
         this.launcherPidfCalculationStrategy = new SmartLauncherPIDFCalculationStrategy();
         this.isLaunching = false;
         this.activePidfCoefficients = null;
@@ -45,6 +47,10 @@ public class LauncherSubsystem extends SubsystemBase {
     public void periodic() {
         activePidfCoefficients = getCurrentPIDFCoefficients();
         launcherMotor.setPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER, activePidfCoefficients);
+        if (isLaunching()) {
+            double targetVelocity = getTargetVelocity();
+            launcherMotor.setVelocity(targetVelocity);
+        }
     }
 
     public void startLaunching() {

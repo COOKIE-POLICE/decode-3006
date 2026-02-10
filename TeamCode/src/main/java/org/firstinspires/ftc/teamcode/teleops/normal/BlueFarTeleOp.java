@@ -39,4 +39,8 @@ public class BlueFarTeleOp extends BaseTeleOp {
     protected Pose getParkPose() {
         return Preferences.Poses.BLUE_PARK_POSE;
     }
+    @Override
+    protected int getGoalPipeline() {
+        return Preferences.Limelight.PIPELINE_BLUE_GOAL;
+    }
 }

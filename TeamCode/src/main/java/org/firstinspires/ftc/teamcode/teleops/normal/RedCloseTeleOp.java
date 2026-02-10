@@ -39,4 +39,8 @@ public class RedCloseTeleOp extends BaseTeleOp {
     protected Pose getParkPose() {
         return Preferences.Poses.RED_PARK_POSE;
     }
+    @Override
+    protected int getGoalPipeline() {
+        return Preferences.Limelight.PIPELINE_RED_GOAL;
+    }
 }

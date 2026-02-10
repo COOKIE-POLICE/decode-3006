@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.commands;
 
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.IndexerSubsystem;
+
 import com.seattlesolvers.solverslib.command.CommandBase;
 
 public class EjectCommand extends CommandBase {

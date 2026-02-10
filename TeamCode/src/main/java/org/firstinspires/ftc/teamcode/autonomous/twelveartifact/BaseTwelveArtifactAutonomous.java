@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.autonomous.threeartifact;
+package org.firstinspires.ftc.teamcode.autonomous.twelveartifact;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
@@ -10,6 +10,8 @@ import com.seattlesolvers.solverslib.command.button.Trigger;
 import com.seattlesolvers.solverslib.util.TelemetryData;
 
 import org.firstinspires.ftc.teamcode.Preferences;
+import org.firstinspires.ftc.teamcode.commands.AdmitCommand;
+import org.firstinspires.ftc.teamcode.commands.BlockCommand;
 import org.firstinspires.ftc.teamcode.commands.GoToPoseCommand;
 import org.firstinspires.ftc.teamcode.commands.IntakeCommand;
 import org.firstinspires.ftc.teamcode.commands.LaunchCommand;
@@ -17,21 +19,31 @@ import org.firstinspires.ftc.teamcode.commands.StopIntakeCommand;
 import org.firstinspires.ftc.teamcode.commands.StopLaunchCommand;
 import org.firstinspires.ftc.teamcode.commands.TurnIndicatorGreenCommand;
 import org.firstinspires.ftc.teamcode.commands.TurnIndicatorOffCommand;
+import org.firstinspires.ftc.teamcode.commands.TurnToPoseCommand;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+import org.firstinspires.ftc.teamcode.subsystems.BlockerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IndicatorSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LauncherSubsystem;
 
 
-public abstract class BaseThreeArtifactAutonomous extends CommandOpMode {
+public abstract class BaseTwelveArtifactAutonomous extends CommandOpMode {
     protected abstract Pose getMovementPose();
     protected abstract Pose getStartingPose();
     protected abstract Pose getLaunchPose();
+    protected abstract Pose getGoalPose();
+    protected abstract Pose getGrabPoseOneStart();
+    protected abstract Pose getGrabPoseOneEnd();
+    protected abstract Pose getGrabPoseTwoStart();
+    protected abstract Pose getGrabPoseTwoEnd();
+    protected abstract Pose getGrabPoseThreeStart();
+    protected abstract Pose getGrabPoseThreeEnd();
 
     private Follower follower;
     TelemetryData telemetryData = new TelemetryData(telemetry);
     private LauncherSubsystem launcherSubsystem;
     private IntakeSubsystem intakeSubsystem;
+    private BlockerSubsystem blockerSubsystem;
     private Trigger atLaunchVelocityTrigger;
     private IndicatorSubsystem indicatorSubsystem;
 
@@ -39,6 +51,7 @@ public abstract class BaseThreeArtifactAutonomous extends CommandOpMode {
     public void initialize() {
         intakeSubsystem = new IntakeSubsystem(hardwareMap);
         indicatorSubsystem = new IndicatorSubsystem(hardwareMap);
+        blockerSubsystem = new BlockerSubsystem(hardwareMap);
 
         super.reset();
 
@@ -47,21 +60,21 @@ public abstract class BaseThreeArtifactAutonomous extends CommandOpMode {
         launcherSubsystem = new LauncherSubsystem(hardwareMap, follower, Preferences.Poses.BLUE_GOAL_POSE);
 
         SequentialCommandGroup autonomousSequence = new SequentialCommandGroup(
-                new GoToPoseCommand(follower, getLaunchPose()),
-                new GoToPoseCommand(follower, getLaunchPose()),
+                launchArtifacts(),
+                intakeRow(getGrabPoseOneStart(), getGrabPoseOneEnd()),
+                launchArtifacts(),
+                intakeRow(getGrabPoseTwoStart(), getGrabPoseTwoEnd()),
+                launchArtifacts(),
+                intakeRow(getGrabPoseThreeStart(), getGrabPoseThreeEnd()),
+                new GoToPoseCommand(follower, getMovementPose())
 
-                new LaunchCommand(launcherSubsystem),
-                new WaitUntilCommand(() -> launcherSubsystem.isAtTargetVelocity()),
-                new WaitCommand(1000),
-                new IntakeCommand(intakeSubsystem),
-                new WaitCommand(3000),
-                new WaitCommand(3000),
-                new WaitCommand(3000),
-                new StopLaunchCommand(launcherSubsystem),
-                new StopIntakeCommand(intakeSubsystem),
-                new GoToPoseCommand(follower, getMovementPose()),
-                new StopLaunchCommand(launcherSubsystem),
-                new StopIntakeCommand(intakeSubsystem)
+
+
+
+
+
+
+
         );
         atLaunchVelocityTrigger = new Trigger(
                 () -> launcherSubsystem.isAtTargetVelocity()
@@ -73,6 +86,35 @@ public abstract class BaseThreeArtifactAutonomous extends CommandOpMode {
                 .negate()
                 .whileActiveContinuous(new TurnIndicatorOffCommand(indicatorSubsystem));
         schedule(autonomousSequence);
+    }
+    public SequentialCommandGroup intakeRow(Pose grabPoseStart, Pose grabPoseEnd) {
+        return new SequentialCommandGroup(
+                new GoToPoseCommand(follower, grabPoseStart),
+                new GoToPoseCommand(follower, grabPoseStart),
+                new IntakeCommand(intakeSubsystem),
+                new GoToPoseCommand(follower, grabPoseEnd, 0.25),
+                new GoToPoseCommand(follower, grabPoseEnd, 0.25),
+                new WaitCommand(500),
+                new StopIntakeCommand(intakeSubsystem)
+
+        );
+
+    }
+
+    public SequentialCommandGroup launchArtifacts() {
+        return new SequentialCommandGroup(
+                new GoToPoseCommand(follower, getLaunchPose()),
+                new GoToPoseCommand(follower, getLaunchPose()),
+                new AdmitCommand(blockerSubsystem),
+                new LaunchCommand(launcherSubsystem),
+                new WaitUntilCommand(() -> launcherSubsystem.isAtTargetVelocity()),
+                new WaitCommand(1000),
+                new IntakeCommand(intakeSubsystem),
+                new WaitCommand(1000),
+                new StopIntakeCommand(intakeSubsystem),
+                new StopLaunchCommand(launcherSubsystem),
+                new BlockCommand(blockerSubsystem)
+        );
     }
 
     @Override

@@ -2,14 +2,26 @@ package org.firstinspires.ftc.teamcode.strategies.launcherpidfcalculationstrateg
 
 import com.qualcomm.robotcore.hardware.MotorControlAlgorithm;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.seattlesolvers.solverslib.util.InterpLUT;
+
+import org.firstinspires.ftc.teamcode.strategies.launcherpidfcalculationstrategy.LauncherPIDFCalculationStrategy;
 
 public class SmartLauncherPIDFCalculationStrategy implements LauncherPIDFCalculationStrategy {
 
-    public static final double kV = 12.0;
+    public static final double kV = 0.0;
+    private final InterpLUT pLUT;
 
-    // Asymmetric P gains
-    private static final double P_UP = 5.0;
-    private static final double P_DOWN = 0.0;
+    public SmartLauncherPIDFCalculationStrategy() {
+        pLUT = new InterpLUT();
+        pLUT.add(0.0, 0.1);
+        pLUT.add(0.005, 0.5);
+        pLUT.add(0.01, 1);
+        pLUT.add(0.02, 2);
+        pLUT.add(0.05, 10);
+        pLUT.add(1.00, 100);
+        pLUT.add(10.00, 1000);
+        pLUT.createLUT();
+    }
 
     @Override
     public PIDFCoefficients getCalculatedPidf(
@@ -19,8 +31,10 @@ public class SmartLauncherPIDFCalculationStrategy implements LauncherPIDFCalcula
     ) {
         double feedforward = kV;
 
-        double proportional =
-                currentVelocity < targetVelocity ? P_UP : P_DOWN;
+        double error = targetVelocity - currentVelocity;
+        double absPercentError = Math.abs(error) / targetVelocity;
+        double proportional = pLUT.get(absPercentError);
+
         double derivative = 0.0;
         double integral = 0.0;
 

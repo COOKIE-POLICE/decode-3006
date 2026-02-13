@@ -1,12 +1,17 @@
 package org.firstinspires.ftc.teamcode.autonomous.twelveartifact;
 
 import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.Path;
+import com.pedropathing.paths.PathBuilder;
+import com.pedropathing.paths.PathChain;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.command.WaitUntilCommand;
 import com.seattlesolvers.solverslib.command.button.Trigger;
+import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 import com.seattlesolvers.solverslib.util.TelemetryData;
 
 import org.firstinspires.ftc.teamcode.Preferences;
@@ -38,6 +43,7 @@ public abstract class BaseTwelveArtifactAutonomous extends CommandOpMode {
     protected abstract Pose getGrabPoseTwoEnd();
     protected abstract Pose getGrabPoseThreeStart();
     protected abstract Pose getGrabPoseThreeEnd();
+    protected abstract Pose getGoalRelease();
 
     private Follower follower;
     TelemetryData telemetryData = new TelemetryData(telemetry);
@@ -65,7 +71,9 @@ public abstract class BaseTwelveArtifactAutonomous extends CommandOpMode {
                 launchArtifacts(),
                 intakeRow(getGrabPoseTwoStart(), getGrabPoseTwoEnd()),
                 launchArtifacts(),
+                new GoToPoseCommand(follower, getGoalRelease()),
                 intakeRow(getGrabPoseThreeStart(), getGrabPoseThreeEnd()),
+                launchArtifacts(),
                 new GoToPoseCommand(follower, getMovementPose())
 
 
@@ -90,27 +98,23 @@ public abstract class BaseTwelveArtifactAutonomous extends CommandOpMode {
     public SequentialCommandGroup intakeRow(Pose grabPoseStart, Pose grabPoseEnd) {
         return new SequentialCommandGroup(
                 new GoToPoseCommand(follower, grabPoseStart),
-                new GoToPoseCommand(follower, grabPoseStart),
                 new IntakeCommand(intakeSubsystem),
-                new GoToPoseCommand(follower, grabPoseEnd, 0.25),
-                new GoToPoseCommand(follower, grabPoseEnd, 0.25),
-                new WaitCommand(500),
+                new GoToPoseCommand(follower, grabPoseEnd),
                 new StopIntakeCommand(intakeSubsystem)
 
         );
 
     }
 
+
     public SequentialCommandGroup launchArtifacts() {
         return new SequentialCommandGroup(
                 new GoToPoseCommand(follower, getLaunchPose()),
-                new GoToPoseCommand(follower, getLaunchPose()),
-                new AdmitCommand(blockerSubsystem),
                 new LaunchCommand(launcherSubsystem),
+                new AdmitCommand(blockerSubsystem),
                 new WaitUntilCommand(() -> launcherSubsystem.isAtTargetVelocity()),
-                new WaitCommand(1000),
                 new IntakeCommand(intakeSubsystem),
-                new WaitCommand(1000),
+                new WaitCommand(500),
                 new StopIntakeCommand(intakeSubsystem),
                 new StopLaunchCommand(launcherSubsystem),
                 new BlockCommand(blockerSubsystem)

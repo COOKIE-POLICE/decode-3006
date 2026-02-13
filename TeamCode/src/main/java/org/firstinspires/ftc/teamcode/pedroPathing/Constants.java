@@ -27,13 +27,13 @@ public class Constants {
                     0.0
             ))
             .headingPIDFCoefficients(new PIDFCoefficients(
-                    0.75,
+                    0.7,
                     0.0,
                     0.0,
                     0.00
             ))
             .drivePIDFCoefficients(new FilteredPIDFCoefficients(
-                    0.0025,
+                    0.0035,
                     0,
                     0.0,
                     0.6,
@@ -67,11 +67,11 @@ public class Constants {
             .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
     public static PathConstraints pathConstraints = new PathConstraints(
-            1,
-            0.0,
-            0.001,
-            0.001,
-            50,
+            1.0,
+            0.1,
+            0.1,
+            0.009,
+            50.0,
             1.25,
             10,
             1

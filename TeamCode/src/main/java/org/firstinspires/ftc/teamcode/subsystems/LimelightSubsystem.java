@@ -5,15 +5,19 @@ import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 
+import org.firstinspires.ftc.teamcode.Preferences;
+
 public class LimelightSubsystem extends SubsystemBase {
     private final Limelight3A limelight;
     private LLResult latestResult;
 
-    public LimelightSubsystem(HardwareMap hardwareMap, String deviceName) {
-        limelight = hardwareMap.get(Limelight3A.class, deviceName);
+    public LimelightSubsystem(HardwareMap hardwareMap) {
+        limelight = hardwareMap.get(Limelight3A.class, Preferences.LIMELIGHT);
         limelight.start();
     }
-
+    public void shutdown() {
+        limelight.shutdown();
+    }
     public boolean hasValidTarget() {
         return latestResult != null && latestResult.isValid();
     }

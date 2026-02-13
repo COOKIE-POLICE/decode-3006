@@ -7,8 +7,10 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.modules.TunedMotor;
+
+// 192.168.43.1:8080/dash
 @Config
 @TeleOp(name = "Flywheel Tuner", group = "Tuning")
 public class FlywheelTuner extends OpMode {
@@ -20,83 +22,61 @@ public class FlywheelTuner extends OpMode {
     public static double targetVelocity = 0.0;
     public static String motorHardwareName = "launcherMotor";
 
-    private DcMotorEx launcherMotor;
-    private ElapsedTime timer;
+    private TunedMotor tunedMotor;
     private String currentMotorName = "";
 
     @Override
     public void init() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-        timer = new ElapsedTime();
-
-        // initializeMotor()
-        try {
-            launcherMotor = hardwareMap.get(DcMotorEx.class, motorHardwareName);
-            launcherMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            launcherMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-            currentMotorName = motorHardwareName;
-        } catch (IllegalArgumentException exception) {
-            launcherMotor = null;
-            currentMotorName = "";
-        }
+        _initializeMotor();
     }
 
     @Override
     public void init_loop() {
         if (!motorHardwareName.equals(currentMotorName)) {
-            // initializeMotor()
-            try {
-                launcherMotor = hardwareMap.get(DcMotorEx.class, motorHardwareName);
-                launcherMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                launcherMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-                currentMotorName = motorHardwareName;
-            } catch (IllegalArgumentException exception) {
-                launcherMotor = null;
-                currentMotorName = "";
-            }
+            _initializeMotor();
         }
 
-        telemetry.addData("Motor Status", launcherMotor != null ? "Connected" : "Not Found");
+        telemetry.addData("Motor Status", tunedMotor != null ? "Connected" : "Not Found");
         telemetry.addData("Motor Name", motorHardwareName);
         telemetry.update();
     }
 
     @Override
-    public void start() {
-        timer.reset();
-    }
-
-    @Override
     public void loop() {
         if (!motorHardwareName.equals(currentMotorName)) {
-            try {
-                launcherMotor = hardwareMap.get(DcMotorEx.class, motorHardwareName);
-                launcherMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                launcherMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-                currentMotorName = motorHardwareName;
-            } catch (IllegalArgumentException exception) {
-                launcherMotor = null;
-                currentMotorName = "";
-            }
+            _initializeMotor();
         }
 
-        if (launcherMotor == null) {
+        if (tunedMotor == null) {
             telemetry.addData("Error", "Motor not found: " + motorHardwareName);
             telemetry.update();
             return;
         }
+        tunedMotor.setPIDF(proportionalGain, integralGain, derivativeGain, feedforwardGain);
+        tunedMotor.setTargetVelocity(targetVelocity);
 
-        launcherMotor.setVelocityPIDFCoefficients(
-                proportionalGain,
-                integralGain,
-                derivativeGain,
-                feedforwardGain
-        );
+        double currentVelocity = Math.abs(tunedMotor.getMotor().getVelocity());
+        tunedMotor.update(currentVelocity);
 
-        launcherMotor.setVelocity(targetVelocity);
-        double currentVelocity = launcherMotor.getVelocity();
         telemetry.addData("Target Velocity", targetVelocity);
         telemetry.addData("Current Velocity", currentVelocity);
+        telemetry.addData("Error", Math.abs(targetVelocity - currentVelocity));
+        telemetry.addData("At Setpoint", tunedMotor.atSetPoint());
         telemetry.update();
+    }
+
+    private void _initializeMotor() {
+        try {
+            DcMotorEx motor = hardwareMap.get(DcMotorEx.class, motorHardwareName);
+            motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+            tunedMotor = new TunedMotor(motor, proportionalGain, integralGain, derivativeGain, feedforwardGain);
+            currentMotorName = motorHardwareName;
+        } catch (IllegalArgumentException exception) {
+            tunedMotor = null;
+            currentMotorName = "";
+        }
     }
 }

@@ -52,5 +52,9 @@ public class TwelveArtifactBlueCloseAutonomous extends BaseTwelveArtifactAutonom
     protected Pose getGrabPoseThreeEnd() {
         return Preferences.Poses.BLUE_GRAB_POSE_THREE_END;
     }
+    @Override
+    protected Pose getGoalRelease() {
+        return Preferences.Poses.BLUE_GATE_RELEASE_POSE;
+    }
 }
 

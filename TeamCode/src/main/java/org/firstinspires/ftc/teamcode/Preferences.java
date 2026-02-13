@@ -13,12 +13,9 @@ public class Preferences {
     public static final String RIGHT_REAR_MOTOR = "rightBackMotor";
     public static final String LEFT_REAR_MOTOR = "leftBackMotor";
     public static final String LEFT_FRONT_MOTOR = "leftFrontMotor";
-    public static final String INTAKE_MOTOR = "intakerMotor";
-    public static final String BLOCKER_SERVO = "blockerServo";
     public static final String LAUNCHER_MOTOR = "launcherMotor";
     public static final String PINPOINT_ODOMETRY = "pinpoint";
     public static final String LIMELIGHT = "limelight";
-    public static final String IMU = "imu";
 
     @Configurable
     public static class Poses {
@@ -82,11 +79,6 @@ public class Preferences {
         public static PIDFCoefficients pidfCoefficients = new PIDFCoefficients(0.01, 0.0, 0.0, 0.00035);
         public static DcMotorSimple.Direction DIRECTION = DcMotorSimple.Direction.FORWARD;
         public static double TARGET_VELOCITY = 50;
-    }
-    @Configurable
-    public static class BlockerServo {
-        public static double BLOCK_POSITION = 1.0;
-        public static double ADMIT_POSITION = 0.570;
     }
 
     @Configurable

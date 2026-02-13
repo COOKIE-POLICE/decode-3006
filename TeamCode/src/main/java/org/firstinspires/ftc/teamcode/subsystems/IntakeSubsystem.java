@@ -1,92 +1,58 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 
 import org.firstinspires.ftc.teamcode.Preferences;
 
-/**
- * IntakeSubsystem controls only the intake motor.
- */
- public class IntakeSubsystem extends SubsystemBase {
-     private final DcMotor intakeMotor;
+public class IntakeSubsystem extends SubsystemBase {
 
-    private enum IntakeState {
-        STOPPED,
-        INTAKING,
-        EJECTING
+    private final DcMotor intakeMotor;
+
+    private IntakeSubsystem(Builder builder) {
+        intakeMotor = builder.hardwareMap.get(DcMotor.class, builder.motorName);
+        intakeMotor.setDirection(builder.direction);
     }
 
-    private IntakeState currentState = IntakeState.STOPPED;
-    public IntakeSubsystem(HardwareMap hardwareMap) {
-        intakeMotor = hardwareMap.get(DcMotor.class, Preferences.INTAKE_MOTOR);
-        intakeMotor.setDirection(Preferences.Intake.DIRECTION);
+    public static final class Builder {
+        private HardwareMap hardwareMap;
+        private String motorName = Preferences.INTAKE_MOTOR;
+        private DcMotorSimple.Direction direction = Preferences.Intake.DIRECTION;
 
+        public Builder(HardwareMap hardwareMap) {
+            hardwareMap = hardwareMap;
+        }
+
+        public Builder motorName(String motorName) {
+            motorName = motorName;
+            return this;
+        }
+
+        public Builder direction(DcMotorSimple.Direction direction) {
+            direction = direction;
+            return this;
+        }
+
+        public IntakeSubsystem build() {
+            return new IntakeSubsystem(this);
+        }
     }
 
     public void startIntaking() {
-        currentState = IntakeState.INTAKING;
-        intakeMotor.setPower(1);
+        intakeMotor.setPower(1.0);
     }
+
     public void startEjecting() {
-        currentState = IntakeState.EJECTING;
-        intakeMotor.setPower(-1);
+        intakeMotor.setPower(-1.0);
     }
 
     public void stop() {
-        currentState = IntakeState.STOPPED;
         intakeMotor.setPower(0.0);
     }
 
-    /**
-     * Set the intake motor power directly (for manual control).
-     */
-    public void setIntakePower(double power) {
+    public void setPower(double power) {
         intakeMotor.setPower(power);
     }
-
-    /**
-     * Check if the intake is currently running.
-     */
-    public boolean isIntaking() {
-        return currentState == IntakeState.INTAKING;
-    }
-
-    /**
-     * Check if the intake is currently ejecting.
-     */
-    public boolean isEjecting() {
-        return currentState == IntakeState.EJECTING;
-    }
-
-    /**
-     * Check if the intake is stopped.
-     */
-    public boolean isStopped() {
-        return currentState == IntakeState.STOPPED;
-    }
-
-    /**
-     * Get the current intake state.
-     */
-    public String getState() {
-        return currentState.toString();
-    }
-    
-    /**
-     * Get the last detected color sensor.
-     * @return "LEFT", "RIGHT", or "NONE"
-     */
-    public String getLastDetectedSensor() { return "NONE"; }
-    
-    /**
-     * Get the left color sensor color.
-     */
-    public int getLeftColor() { return 0; }
-    
-    /**
-     * Get the right color sensor color.
-     */
-    public int getRightColor() { return 0; }
 }

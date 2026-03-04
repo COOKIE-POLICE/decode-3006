@@ -30,15 +30,7 @@ public class BlueCloseTeleOp extends BaseTeleOp {
         return Preferences.Poses.CloseLaunchingPoses.CLOSE_BLUE_LAUNCH_POSE;
     }
 
-    @Override
-    protected Pose getGateReleasePose() {
-        return Preferences.Poses.BLUE_GATE_RELEASE_POSE;
-    }
 
-    @Override
-    protected Pose getParkPose() {
-        return Preferences.Poses.BLUE_PARK_POSE;
-    }
     @Override
     protected int getGoalPipeline() {
         return Preferences.Limelight.PIPELINE_BLUE_GOAL;

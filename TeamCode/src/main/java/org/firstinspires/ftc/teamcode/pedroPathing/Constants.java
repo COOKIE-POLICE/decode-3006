@@ -18,26 +18,26 @@ import org.firstinspires.ftc.teamcode.Preferences;
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
             .mass(11.34)
-            .forwardZeroPowerAcceleration(-29.45)
+            .forwardZeroPowerAcceleration(-29.25)
             .lateralZeroPowerAcceleration(-67.342491844080064)
             .translationalPIDFCoefficients(new PIDFCoefficients(
                     0.0425,
                     0.0,
                     0.0,
-                    0.0
+                    0.0225
             ))
             .headingPIDFCoefficients(new PIDFCoefficients(
                     0.7,
                     0.0,
                     0.0,
-                    0.00
+                    0.0225
             ))
             .drivePIDFCoefficients(new FilteredPIDFCoefficients(
                     0.0035,
                     0,
                     0.0,
                     0.6,
-                    0.0
+                    0.0225
             ))
             .drivePIDFSwitch(15)
             .centripetalScaling(0.0005);
@@ -52,8 +52,8 @@ public class Constants {
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .xVelocity(75.910059651)
-            .yVelocity(49.00897)
+            .xVelocity(83.8666)
+            .yVelocity(55.206)
             .useBrakeModeInTeleOp(true);
     public static PinpointConstants localizerConstants = new PinpointConstants()
             .forwardPodY(190.679)
@@ -68,11 +68,11 @@ public class Constants {
 
     public static PathConstraints pathConstraints = new PathConstraints(
             1.0,
-            0.1,
-            0.1,
-            0.009,
+            0.0,
+            0.0,
+            0.0,
             50.0,
-            1.25,
+            0.5,
             10,
             1
     );

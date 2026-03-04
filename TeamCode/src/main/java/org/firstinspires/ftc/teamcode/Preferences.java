@@ -16,6 +16,7 @@ public class Preferences {
     public static final String LAUNCHER_MOTOR = "launcherMotor";
     public static final String PINPOINT_ODOMETRY = "pinpoint";
     public static final String LIMELIGHT = "limelight";
+    public static final String INTAKE_MOTOR = "intakeMotor";
 
     @Configurable
     public static class Poses {
@@ -26,12 +27,13 @@ public class Preferences {
             public static Pose RED_FAR_START_POSE = BLUE_FAR_START_POSE.mirror();
             public static Pose RED_CLOSE_START_POSE = BLUE_CLOSE_START_POSE.mirror();
         }
+
         public static class CloseLaunchingPoses {
-            public static Pose CLOSE_BLUE_LAUNCH_POSE = calculateLaunchPose(60, 84, BLUE_GOAL_POSE);
+            public static Pose CLOSE_BLUE_LAUNCH_POSE = calculateLaunchPose(55, 77, BLUE_GOAL_POSE);
             public static Pose CLOSE_RED_LAUNCH_POSE = CLOSE_BLUE_LAUNCH_POSE.mirror();
         }
         public static class LaunchingPoses {
-            public static Pose BLUE_LAUNCH_POSE = calculateLaunchPose(60, 14, BLUE_GOAL_POSE);
+            public static Pose BLUE_LAUNCH_POSE = calculateLaunchPose(57, 20, BLUE_GOAL_POSE);
             public static Pose RED_LAUNCH_POSE = BLUE_LAUNCH_POSE.mirror();
         }
         public static class MovementPoses {
@@ -41,7 +43,7 @@ public class Preferences {
             public static Pose MOVEMENT_RED_CLOSE_POSE = new Pose();
         }
 
-        public static Pose BLUE_GOAL_POSE = new Pose(11, 136);
+        public static Pose BLUE_GOAL_POSE = new Pose(14, 128);
         public static Pose RED_GOAL_POSE = BLUE_GOAL_POSE.mirror();
         public static Pose BLUE_GATE_RELEASE_POSE = new Pose(16, 70, Math.toRadians(180));
         public static Pose RED_GATE_RELEASE_POSE = new Pose(128, 70, Math.toRadians(0));
@@ -60,7 +62,7 @@ public class Preferences {
         public static Pose RED_HUMAN_PLAYER_GRAB_POSE_START = BLUE_HUMAN_PLAYER_GRAB_POSE_START.mirror();
         public static Pose RED_HUMAN_PLAYER_GRAB_POSE_END = BLUE_HUMAN_PLAYER_GRAB_POSE_END.mirror();
 
-        public static double LAUNCH_HEADING_OFFSET_DEGREES = 10.0;
+        public static double LAUNCH_HEADING_OFFSET_DEGREES = 0.0;
         private static Pose calculateLaunchPose(double x, double y, Pose goalPose) {
             double deltaX = goalPose.getX() - x;
             double deltaY = goalPose.getY() - y;

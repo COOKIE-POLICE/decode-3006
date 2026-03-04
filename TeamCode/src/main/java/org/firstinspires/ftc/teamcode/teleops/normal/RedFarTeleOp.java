@@ -30,15 +30,7 @@ public class RedFarTeleOp extends BaseTeleOp {
         return Preferences.Poses.CloseLaunchingPoses.CLOSE_RED_LAUNCH_POSE;
     }
 
-    @Override
-    protected Pose getGateReleasePose() {
-        return Preferences.Poses.RED_GATE_RELEASE_POSE;
-    }
 
-    @Override
-    protected Pose getParkPose() {
-        return Preferences.Poses.RED_PARK_POSE;
-    }
     @Override
     protected int getGoalPipeline() {
         return Preferences.Limelight.PIPELINE_RED_GOAL;

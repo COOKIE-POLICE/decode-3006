@@ -38,9 +38,7 @@ public class TunedMotor {
         double absoluteTarget = Math.abs(targetVelocity);
         double absoluteCurrent = Math.abs(currentVelocity);
         double direction = Math.signum(targetVelocity);
-
-        double power = controller.calculate(absoluteCurrent, absoluteTarget);
-        motor.setPower(power * direction);
+        motor.setPower(controller.calculate(absoluteCurrent, absoluteTarget) * direction);
     }
 
     public double getTargetVelocity() {

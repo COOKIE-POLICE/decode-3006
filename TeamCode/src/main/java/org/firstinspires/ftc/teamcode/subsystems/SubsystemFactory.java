@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.strategies.launcherpidfcalculationstrategy.PreferencesLauncherPIDFCalculationStrategy;
 import org.firstinspires.ftc.teamcode.strategies.targetvelocitycalculationstrategy.InterpolatedTargetVelocityCalculationStrategy;
+import org.firstinspires.ftc.teamcode.strategies.targetvelocitycalculationstrategy.PreferencesTargetVelocityCalculationStrategy;
 
 public final class SubsystemFactory {
 

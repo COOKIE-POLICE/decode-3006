@@ -39,9 +39,9 @@ public abstract class BaseTeleOp extends CommandOpMode {
 
     private static final double JOYSTICK_DEADZONE = 0.1;
 
-    public static double lockOnProportional = 0.005;
+    public static double lockOnProportional = 0.4;
     public static double lockOnIntegral = 0.0;
-    public static double lockOnDerivative = 0.0;
+    public static double lockOnDerivative = 0.4;
     public static double lockOnFeedforward = 0.0;
     public static PIDFController lockOnPidf = new PIDFController(lockOnProportional, lockOnIntegral, lockOnDerivative, lockOnFeedforward);
 
@@ -57,8 +57,17 @@ public abstract class BaseTeleOp extends CommandOpMode {
     private DoubleSupplier strafe;
     private DoubleSupplier rotate;
     private Trigger joystickMovementTrigger;
-    private Trigger blockingTrigger;
+
     private boolean isLockedOn = false;
+    public static double headingHoldProportional = 0.5;
+    public static double headingHoldIntegral = 0.0;
+    public static double headingHoldDerivative = 0.2;
+    public static double headingHoldFeedforward = 0.0;
+    public static PIDFController headingHoldPidf = new PIDFController(
+            headingHoldProportional, headingHoldIntegral, headingHoldDerivative, headingHoldFeedforward
+    );
+
+    private double heldHeading = 0.0;
 
     protected abstract Pose getStartingPose();
     protected abstract Pose getGoalPose();
@@ -72,6 +81,7 @@ public abstract class BaseTeleOp extends CommandOpMode {
 
         follower = Constants.createFollower(hardwareMap);
         follower.update();
+        heldHeading = follower.getHeading();
         follower.startTeleopDrive();
         follower.setStartingPose(getStartingPose());
 
@@ -91,9 +101,20 @@ public abstract class BaseTeleOp extends CommandOpMode {
         rotate = this::getRotation;
 
         joystickMovementTrigger = new Trigger(this::isJoystickMoving);
-        blockingTrigger = new Trigger(() -> blockerSubsystem.isBlocking());
+        Trigger atLaunchVelocityTrigger = new Trigger(() -> launcherSubsystem.isAtTargetVelocity());
 
-        normalDriveCommand = new PedroPathingDriveCommand(follower, forward, strafe, rotate);
+        atLaunchVelocityTrigger
+                .whileActiveContinuous(new TurnIndicatorGreenCommand(indicatorSubsystem));
+
+        atLaunchVelocityTrigger
+                .negate()
+                .whileActiveContinuous(new TurnIndicatorOffCommand(indicatorSubsystem));
+
+        normalDriveCommand = new PedroPathingDriveCommand(
+                follower,
+                forward,
+                strafe,
+                rotate);
         schedule(normalDriveCommand);
         schedule(new BlockCommand(blockerSubsystem));
         schedule(new TurnIndicatorOffCommand(indicatorSubsystem));
@@ -123,15 +144,10 @@ public abstract class BaseTeleOp extends CommandOpMode {
                         new StopLaunchCommand(launcherSubsystem)
                 );
 
-        blockingTrigger
-                .whileActiveContinuous(new TurnIndicatorOffCommand(indicatorSubsystem));
-
-        blockingTrigger
-                .negate()
-                .whileActiveContinuous(new TurnIndicatorGreenCommand(indicatorSubsystem));
 
         driverOp.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
                 .whenPressed(new GoToPoseCommand(follower, getLaunchPose()));
+
 
         driverOp.getGamepadButton(GamepadKeys.Button.DPAD_UP)
                 .whenPressed(new GoToPoseCommand(follower, getCloseLaunchPose()));
@@ -154,8 +170,11 @@ public abstract class BaseTeleOp extends CommandOpMode {
     @Override
     public void run() {
         super.run();
-        telemetry.addData("Limelight TX", limelightSubsystem.getTargetX());
+        telemetry.addData("Current Velocity", "%.2f", launcherSubsystem.getVelocity());
+        telemetry.addData("Target Velocity", "%.2f", launcherSubsystem.getTargetVelocity());
+        telemetry.addData("HeadingError", getHeadingError());
         telemetry.addData("Zero Line", 0.0);
+        telemetry.addData("Distance to Goal", "%.2f", launcherSubsystem.getDistanceToGoal());
         telemetry.update();
         follower.update();
     }
@@ -165,18 +184,34 @@ public abstract class BaseTeleOp extends CommandOpMode {
         schedule(new BlockCommand(blockerSubsystem));
         limelightSubsystem.shutdown();
     }
+    public double getHeadingError() {
+        double deltaX = getGoalPose().getX() - follower.getPose().getX();
+        double deltaY = getGoalPose().getY() - follower.getPose().getY();
+        double headingError = follower.getHeading() - Math.atan2(deltaY, deltaX);
+        return headingError;
+    }
 
     private double getRotation() {
-        if (isLockedOn && limelightSubsystem.hasValidTarget()) {
+        if (isLockedOn) {
             lockOnPidf.setPIDF(lockOnProportional, lockOnIntegral, lockOnDerivative, lockOnFeedforward);
-            return lockOnPidf.calculate(limelightSubsystem.getTargetX(), 0.0);
+            double deltaX = getGoalPose().getX() - follower.getPose().getX();
+            double deltaY = getGoalPose().getY() - follower.getPose().getY();
+            return lockOnPidf.calculate(follower.getHeading(), Math.atan2(deltaY, deltaX));
         }
-        return -driverOp.getRightX();
+
+        double rightX = driverOp.getRightX();
+        if (Math.abs(rightX) > JOYSTICK_DEADZONE) {
+            heldHeading = follower.getHeading();
+            return -rightX;
+        }
+
+        headingHoldPidf.setPIDF(headingHoldProportional, headingHoldIntegral, headingHoldDerivative, headingHoldFeedforward);
+        return headingHoldPidf.calculate(follower.getHeading(), heldHeading);
     }
 
     private boolean isJoystickMoving() {
-        return Math.abs(forward.getAsDouble()) > JOYSTICK_DEADZONE
-                || Math.abs(strafe.getAsDouble()) > JOYSTICK_DEADZONE
-                || Math.abs(rotate.getAsDouble()) > JOYSTICK_DEADZONE;
+        return Math.abs(driverOp.getLeftY()) > JOYSTICK_DEADZONE
+                || Math.abs(driverOp.getLeftX()) > JOYSTICK_DEADZONE
+                || Math.abs(driverOp.getRightX()) > JOYSTICK_DEADZONE;
     }
 }

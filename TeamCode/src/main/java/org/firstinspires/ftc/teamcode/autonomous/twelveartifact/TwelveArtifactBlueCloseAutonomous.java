@@ -15,7 +15,7 @@ public class TwelveArtifactBlueCloseAutonomous extends BaseTwelveArtifactAutonom
     }
 
     @Override
-    protected Pose getLaunchPose() {
+    protected Pose getFarLaunchPose() {
         return Preferences.Poses.CloseLaunchingPoses.CLOSE_BLUE_LAUNCH_POSE;
     }
 
@@ -55,6 +55,10 @@ public class TwelveArtifactBlueCloseAutonomous extends BaseTwelveArtifactAutonom
     @Override
     protected Pose getGoalRelease() {
         return Preferences.Poses.BLUE_GATE_RELEASE_POSE;
+    }
+    @Override
+    protected Pose getCloseLaunchPose() {
+        return Preferences.Poses.CloseLaunchingPoses.CLOSE_BLUE_LAUNCH_POSE;
     }
 }
 

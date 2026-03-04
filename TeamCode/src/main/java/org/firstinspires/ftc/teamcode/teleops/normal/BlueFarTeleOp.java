@@ -31,15 +31,6 @@ public class BlueFarTeleOp extends BaseTeleOp {
     }
 
     @Override
-    protected Pose getGateReleasePose() {
-        return Preferences.Poses.BLUE_GATE_RELEASE_POSE;
-    }
-
-    @Override
-    protected Pose getParkPose() {
-        return Preferences.Poses.BLUE_PARK_POSE;
-    }
-    @Override
     protected int getGoalPipeline() {
         return Preferences.Limelight.PIPELINE_BLUE_GOAL;
     }

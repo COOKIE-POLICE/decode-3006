@@ -28,7 +28,8 @@ public abstract class BaseTwelveArtifactAutonomous extends CommandOpMode {
 
     protected abstract Pose getMovementPose();
     protected abstract Pose getStartingPose();
-    protected abstract Pose getLaunchPose();
+    protected abstract Pose getCloseLaunchPose();
+    protected abstract Pose getFarLaunchPose();
     protected abstract Pose getGoalPose();
     protected abstract Pose getGrabPoseOneStart();
     protected abstract Pose getGrabPoseOneEnd();
@@ -66,14 +67,14 @@ public abstract class BaseTwelveArtifactAutonomous extends CommandOpMode {
                 .whileActiveContinuous(new TurnIndicatorOffCommand(indicatorSubsystem));
 
         schedule(new SequentialCommandGroup(
-                launchArtifacts(),
+                launchArtifacts(getCloseLaunchPose()),
                 intakeRow(getGrabPoseOneStart(), getGrabPoseOneEnd()),
-                launchArtifacts(),
+                launchArtifacts(getCloseLaunchPose()),
                 intakeRow(getGrabPoseTwoStart(), getGrabPoseTwoEnd()),
-                launchArtifacts(),
+                launchArtifacts(getCloseLaunchPose()),
                 new GoToPoseCommand(follower, getGoalRelease()),
                 intakeRow(getGrabPoseThreeStart(), getGrabPoseThreeEnd()),
-                launchArtifacts(),
+                launchArtifacts(getFarLaunchPose()),
                 new GoToPoseCommand(follower, getMovementPose())
         ));
     }
@@ -87,9 +88,9 @@ public abstract class BaseTwelveArtifactAutonomous extends CommandOpMode {
         );
     }
 
-    private SequentialCommandGroup launchArtifacts() {
+    private SequentialCommandGroup launchArtifacts(Pose launchPose) {
         return new SequentialCommandGroup(
-                new GoToPoseCommand(follower, getLaunchPose()),
+                new GoToPoseCommand(follower, launchPose),
                 new LaunchCommand(launcherSubsystem),
                 new AdmitCommand(blockerSubsystem),
                 new WaitUntilCommand(() -> launcherSubsystem.isAtTargetVelocity()),
